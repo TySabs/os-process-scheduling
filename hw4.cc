@@ -7,9 +7,13 @@
 
 #include <iostream>
 #include <queue>
+#include <fstream>
 #include "process.h"
 
-using namespace std;
+using std::cerr;
+using std::string;
+using std::endl;
+using std::ifstream;
 
 const int MAX_TIME = 500,
             AT_ONCE = 5,
@@ -18,11 +22,27 @@ const int MAX_TIME = 500,
             HOW_OFTEN = 25;
 
 int main(int argc, char *argv[]) {
-  cerr << "Hello World!" << endl;
+  ifstream infile;
 
-  Process p;
+  infile.open("./data4.txt");
 
+  if (!infile) {
+    cerr << "Unable to open file data4.txt";
+    exit(1);
+  }
+
+  string processName;
+  unsigned int priority, arrivalTime;
+
+  infile >> processName;
+  infile >> priority;
+  infile >> arrivalTime;
+
+  Process p(processName, priority, arrivalTime);
   p.hello();
+
+  infile.close();
+
 
   return 0;
 }

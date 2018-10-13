@@ -8,8 +8,8 @@
   class Process {
     public:
       string processName;
-      uint priority;
-      int arrivalTime;
+      unsigned int priority;
+      unsigned int arrivalTime;
       // TODO add History - an array of pairs of the form (letter, value) // max 10 pairs
       int historyIndex;
       int cpuTimer;
@@ -23,6 +23,7 @@
 
       void hello();
       Process();
+      Process(string, unsigned int, unsigned int);
 
   };
 
