@@ -8,7 +8,7 @@
 #include <iostream>
 #include <queue>
 #include <fstream>
-#include <map>
+#include <vector>
 #include <iterator>
 #include "process.h"
 
@@ -16,18 +16,19 @@ using std::cerr;
 using std::string;
 using std::endl;
 using std::ifstream;
-using std::map;
+using std::vector;
 using std::queue;
+using std::make_pair;
 
 const int MAX_TIME = 500,
             AT_ONCE = 5,
             QUEUE_SIZE = 20,
-            ARRAY_SIZE = 10,
             HOW_OFTEN = 25;
 
 int main(int argc, char *argv[]) {
   ifstream infile;
-  queue<Process> entryQueue;
+  queue<Process> entryQueue, readyQueue;
+  vector<Process> processPool;
 
   infile.open("./data4.txt");
 
@@ -35,6 +36,7 @@ int main(int argc, char *argv[]) {
     cerr << "Unable to open file data4.txt";
     exit(1);
   }
+
 
   string processName;
   unsigned int priority, arrivalTime;
@@ -58,14 +60,14 @@ int main(int argc, char *argv[]) {
 
 
     while (burstType != 'N') {
-      newProcess.history[burstType] = burstTime;
-
+      newProcess.history.push_back(make_pair(burstType, burstTime));
       infile >> burstType;
       infile >> burstTime;
     }
 
-    // p.hello();
-    entryQueue.push(newProcess);
+    newProcess.calculateBurstCounts();
+
+    processPool.push_back(newProcess);
 
     string garbage;
     std::getline(infile, garbage);
@@ -73,12 +75,27 @@ int main(int argc, char *argv[]) {
 
   infile.close();
 
-  while (!entryQueue.empty()) {
-    Process p = entryQueue.front();
-    p.hello();
-    entryQueue.pop();
+  unsigned int mainTimer = 0;
+
+  while (mainTimer < MAX_TIME && !processPool.empty()) {
+
+
+    vector<Process>::iterator it;
+    for (it = processPool.begin(); it != processPool.end(); ++it) {
+      if (it->arrivalTime <= mainTimer) {
+        it->printReadyPush(mainTimer);
+        entryQueue.push(*it);
+        processPool.erase(it);
+      }
+
+      if (processPool.empty()) break;
+    }
+
+
+    mainTimer++;
   }
 
+  cerr << "Final time: " << mainTimer << endl;
 
   return 0;
 }

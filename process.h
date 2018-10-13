@@ -2,17 +2,18 @@
   #define PROCESS_H
 
   #include <string>
-  #include <map>
+  #include <vector>
 
   using std::string;
-  using std::map;
+  using std::pair;
+  using std::vector;
 
   class Process {
     public:
       string processName;
       unsigned int priority;
       unsigned int arrivalTime;
-      map<char, int> history;
+      vector<pair<char, int> > history;
       int historyIndex;
       int cpuTimer;
       int ioTimer;
@@ -26,6 +27,9 @@
       void hello();
       Process();
       Process(string, unsigned int, unsigned int);
+      void calculateBurstCounts();
+      void printReadyPush(int);
+
 
   };
 
