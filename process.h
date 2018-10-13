@@ -2,15 +2,17 @@
   #define PROCESS_H
 
   #include <string>
+  #include <map>
 
   using std::string;
+  using std::map;
 
   class Process {
     public:
       string processName;
       unsigned int priority;
       unsigned int arrivalTime;
-      // TODO add History - an array of pairs of the form (letter, value) // max 10 pairs
+      map<char, int> history;
       int historyIndex;
       int cpuTimer;
       int ioTimer;

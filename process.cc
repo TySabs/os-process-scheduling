@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <map>
+#include <iterator>
 #include "process.h"
 
 using std::cerr;
@@ -17,8 +19,16 @@ Process::Process(string newName, unsigned int newPriority, unsigned int newTime)
 }
 
 void Process::hello() {
-  cerr << "Hello processes!" << endl;
   cerr << "Process Name: " << processName << endl;
   cerr << "Priority: " << priority << endl;
   cerr << "Arrival: " << arrivalTime << endl;
+  cerr << "--------------" << endl;
+
+
+  map<char, int>::iterator it;
+  for (it = history.begin(); it != history.end(); ++it) {
+    cerr << "Burst Type - Time: " << it->first << " -- " << it->second << endl;
+  }
+
+  cerr << endl;
 }

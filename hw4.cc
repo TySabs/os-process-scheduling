@@ -8,12 +8,16 @@
 #include <iostream>
 #include <queue>
 #include <fstream>
+#include <map>
+#include <iterator>
 #include "process.h"
 
 using std::cerr;
 using std::string;
 using std::endl;
 using std::ifstream;
+using std::map;
+using std::queue;
 
 const int MAX_TIME = 500,
             AT_ONCE = 5,
@@ -23,6 +27,7 @@ const int MAX_TIME = 500,
 
 int main(int argc, char *argv[]) {
   ifstream infile;
+  queue<Process> entryQueue;
 
   infile.open("./data4.txt");
 
@@ -33,15 +38,46 @@ int main(int argc, char *argv[]) {
 
   string processName;
   unsigned int priority, arrivalTime;
+  char burstType;
+  int burstTime;
 
-  infile >> processName;
-  infile >> priority;
-  infile >> arrivalTime;
+  while (true) {
+    infile >> processName;
 
-  Process p(processName, priority, arrivalTime);
-  p.hello();
+    if (processName.compare("STOPHERE") == 0) {
+      break;
+    }
+
+    infile >> priority;
+    infile >> arrivalTime;
+
+    Process newProcess(processName, priority, arrivalTime);
+
+    infile >> burstType;
+    infile >> burstTime;
+
+
+    while (burstType != 'N') {
+      newProcess.history[burstType] = burstTime;
+
+      infile >> burstType;
+      infile >> burstTime;
+    }
+
+    // p.hello();
+    entryQueue.push(newProcess);
+
+    string garbage;
+    std::getline(infile, garbage);
+  }
 
   infile.close();
+
+  while (!entryQueue.empty()) {
+    Process p = entryQueue.front();
+    p.hello();
+    entryQueue.pop();
+  }
 
 
   return 0;
