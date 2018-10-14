@@ -28,15 +28,15 @@
       int iCount;
       int oCount;
 
-      void hello();
+      void goodbye(unsigned int);
       Process();
       Process(string, unsigned int, unsigned int);
       void calculateBurstCounts();
       void printEntryPop(unsigned int);
       void printQueuePush(string, unsigned int);
       void printActiveState(string, unsigned int);
-      int runProcess();
-
+      bool runProcess();
+      bool runIO();
 
   };
 

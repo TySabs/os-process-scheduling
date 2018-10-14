@@ -26,11 +26,14 @@ Process::Process(string newName, unsigned int newPriority, unsigned int newTime)
   oCount = 0;
 }
 
-void Process::hello() {
+void Process::goodbye(unsigned int endTime) {
+  cerr << "Terminating process" << endl;
+  cerr << "><><><><><><><><><><><><><><" << endl;
   cerr << "Process Name: " << processName << endl;
   cerr << "Priority: " << priority << endl;
-  cerr << "Arrival: " << arrivalTime << endl;
-  cerr << "--------------" << endl;
+  cerr << "Arrival Time: " << arrivalTime << endl;
+  cerr << "Termination Time: " << endTime << endl;
+  cerr << "--------------------------" << endl;
 
 
   vector<pair<char, int> >::iterator it;
@@ -58,7 +61,11 @@ string Process::buildPrefixType(string output) {
   } else if (output.compare("Ready Queue") == 0) {
     return "(R) - ";
   } else if (output.compare("Active") == 0) {
-    return "(A) - ";
+    return "(C) - ";
+  } else if (output.compare("Input") == 0) {
+    return "(I) - ";
+  } else if (output.compare("Output") == 0) {
+    return "(O) - ";
   } else {
     return "";
   }
@@ -79,17 +86,28 @@ void Process::printQueuePush(string qType, unsigned int pushTime) {
 void Process::printActiveState(string stateType, unsigned int pushTime) {
   string prefix = buildPrefixType(stateType);
 
-  cerr << prefix << processName << " process is Active. Times Main/CPU: "
+  cerr << prefix << processName << " process is " << stateType << " Times Main/CPU: "
       << pushTime << " -- " << cpuTimer << endl << endl;
 }
 
-int Process::runProcess() {
+bool Process::runProcess() {
   cpuTimer++;
   if (cpuTimer <= history[historyIndex].second) {
     return true;
   } else {
     historyIndex++;
     cpuTimer = 0;
+    return false;
+  }
+}
+
+bool Process::runIO() {
+  ioTimer++;
+  if (ioTimer <= history[historyIndex].second) {
+    return true;
+  } else {
+    historyIndex++;
+    ioTimer = 0;
     return false;
   }
 }

@@ -35,14 +35,18 @@ struct GreaterThanByPriority {
 void printEntryQueue(queue<Process> entryQ) {
   cerr << "Contents of the Entry Queue: " << endl;
 
-  for (unsigned int i = 0; i < entryQ.size(); i++) {
-    Process entry = entryQ.front();
+  if (entryQ.empty()) {
+    cerr << "(Empty)" << endl;
+  } else {
+    for (unsigned int i = 0; i < entryQ.size(); i++) {
+      Process entry = entryQ.front();
 
-    cerr << entry.processName << " Priority = " << entry.priority
-          << " arriving at time = " << entry.arrivalTime << endl;
+      cerr << entry.processName << " Priority = " << entry.priority
+            << " arriving at time = " << entry.arrivalTime << endl;
 
-    entryQ.pop();
-    entryQ.push(entry);
+      entryQ.pop();
+      entryQ.push(entry);
+    }
   }
 }
 
@@ -82,7 +86,7 @@ void printStatus(queue<Process> entryQ,
 
   cerr << "Active is " << activeName << endl;
   cerr << "IActive is " << inputName << endl;
-  cerr << "OActive is " << outputName << endl;
+  cerr << "OActive is " << outputName << endl << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -145,8 +149,9 @@ int main(int argc, char *argv[]) {
   bool isCpuActive = false, isInputActive = false, isOutputActive = false;
   Process activeProcess, inputProcess, outputProcess;
 
+  // Main program loop
+  while (mainTimer < MAX_TIME) {
 
-  while (mainTimer < MAX_TIME && !entryQueue.empty()) {
     // Loop through entry queue
     for (unsigned int i = 0; i < entryQueue.size(); i++) {
       Process entryProcess = entryQueue.front();
@@ -174,7 +179,7 @@ int main(int argc, char *argv[]) {
     // Handle active process
     if (Active && isCpuActive) {
       isCpuActive = Active->runProcess();
-      Active->printActiveState("Active", mainTimer);
+      // Active->printActiveState("Active", mainTimer);
 
       if (!isCpuActive) {
         switch (Active->history[Active->historyIndex].first) {
@@ -187,12 +192,14 @@ int main(int argc, char *argv[]) {
             Active = nullptr;
             break;
           default:
-            cerr << "Error with end of process!" << endl;
+            Active->goodbye(mainTimer);
+            Active = nullptr;
             break;
         }
       }
     } // end Active process conditional
 
+    // Loop through input queue
     while (!inputQueue.empty() && !isInputActive) {
       inputProcess = inputQueue.top();
       IActive = &inputProcess;
@@ -200,7 +207,37 @@ int main(int argc, char *argv[]) {
       isInputActive = true;
     }
 
-    if (mainTimer > 40) break;
+    // Handle active process
+    if (IActive && isInputActive) {
+      isInputActive = IActive->runIO();
+      // IActive->printActiveState("Input", mainTimer);
+
+      if (!isInputActive) {
+        readyQueue.push(*IActive);
+        IActive = nullptr;
+      }
+    } // end IActive process conditional
+
+    // Loop through input queue
+    while (!outputQueue.empty() && !isOutputActive) {
+      outputProcess = outputQueue.top();
+      OActive = &outputProcess;
+      outputQueue.pop();
+      isOutputActive = true;
+    }
+
+    // Handle active process
+    if (OActive && isInputActive) {
+      isOutputActive = OActive->runIO();
+      // OActive->printActiveState("Output", mainTimer);
+
+      if (!isOutputActive) {
+        readyQueue.push(*OActive);
+        OActive = nullptr;
+      }
+    } // end IActive process conditional
+
+    if (mainTimer > 200) break;
 
     if ((mainTimer % 20) == 0) {
       printStatus(entryQueue, readyQueue, inputQueue, outputQueue,
@@ -208,7 +245,7 @@ int main(int argc, char *argv[]) {
     }
 
     mainTimer++;
-  }
+  } // end main loop
 
   cerr << "Final time: " << mainTimer << endl;
 
