@@ -18,6 +18,7 @@ using std::endl;
 using std::ifstream;
 using std::vector;
 using std::queue;
+using std::priority_queue;
 using std::make_pair;
 
 const int MAX_TIME = 500,
@@ -25,9 +26,70 @@ const int MAX_TIME = 500,
             QUEUE_SIZE = 20,
             HOW_OFTEN = 25;
 
+struct GreaterThanByPriority {
+  bool operator()(const Process& lhs, const Process& rhs) const {
+    return lhs.priority < rhs.priority;
+  }
+};
+
+void printEntryQueue(queue<Process> entryQ) {
+  cerr << "Contents of the Entry Queue: " << endl;
+
+  for (unsigned int i = 0; i < entryQ.size(); i++) {
+    Process entry = entryQ.front();
+
+    cerr << entry.processName << " Priority = " << entry.priority
+          << " arriving at time = " << entry.arrivalTime << endl;
+
+    entryQ.pop();
+    entryQ.push(entry);
+  }
+}
+
+void printPriorityQueue(priority_queue<Process, vector<Process>, GreaterThanByPriority> targetQ,
+      string qName) {
+  cerr << "Contents of the " << qName << " Queue: " << endl;
+
+  if (targetQ.empty()) {
+    cerr << "(Empty)" << endl;
+  } else {
+    priority_queue<Process, vector<Process>, GreaterThanByPriority> copyQueue = targetQ;
+    while (!copyQueue.empty()) {
+      Process p = copyQueue.top();
+      cerr << p.processName << "(" << p.priority << ")\t";
+      copyQueue.pop();
+    }
+
+    cerr << endl;
+  }
+}
+
+void printStatus(queue<Process> entryQ,
+        priority_queue<Process, vector<Process>, GreaterThanByPriority> readyQ,
+        priority_queue<Process, vector<Process>, GreaterThanByPriority> inputQ,
+        priority_queue<Process, vector<Process>, GreaterThanByPriority> outputQ,
+        Process* aPtr, Process* iPtr, Process* oPtr) {
+  printEntryQueue(entryQ);
+  printPriorityQueue(readyQ, "Ready");
+  printPriorityQueue(inputQ, "Input");
+  printPriorityQueue(outputQ, "Output");
+
+  string activeName = "0", inputName = "0", outputName = "0";
+
+  if (aPtr) activeName = aPtr->processName;
+  if (iPtr) inputName = iPtr->processName;
+  if (oPtr) outputName = oPtr->processName;
+
+  cerr << "Active is " << activeName << endl;
+  cerr << "IActive is " << inputName << endl;
+  cerr << "OActive is " << outputName << endl;
+}
+
 int main(int argc, char *argv[]) {
   ifstream infile;
-  queue<Process> entryQueue, readyQueue;
+  queue<Process> entryQueue;
+  priority_queue<Process, vector<Process>, GreaterThanByPriority> readyQueue,
+        inputQueue, outputQueue;
   vector<Process> processPool;
 
   infile.open("./data4.txt");
@@ -36,7 +98,6 @@ int main(int argc, char *argv[]) {
     cerr << "Unable to open file data4.txt";
     exit(1);
   }
-
 
   string processName;
   unsigned int priority, arrivalTime;
@@ -67,7 +128,7 @@ int main(int argc, char *argv[]) {
 
     newProcess.calculateBurstCounts();
 
-    processPool.push_back(newProcess);
+    entryQueue.push(newProcess);
 
     string garbage;
     std::getline(infile, garbage);
@@ -76,21 +137,75 @@ int main(int argc, char *argv[]) {
   infile.close();
 
   unsigned int mainTimer = 0;
+  int processCount = 0;
+  Process *Active = NULL,
+          *IActive = NULL,
+          *OActive = NULL;
 
-  while (mainTimer < MAX_TIME && !processPool.empty()) {
+  bool isCpuActive = false, isInputActive = false, isOutputActive = false;
+  Process activeProcess, inputProcess, outputProcess;
 
 
-    vector<Process>::iterator it;
-    for (it = processPool.begin(); it != processPool.end(); ++it) {
-      if (it->arrivalTime <= mainTimer) {
-        it->printReadyPush(mainTimer);
-        entryQueue.push(*it);
-        processPool.erase(it);
+  while (mainTimer < MAX_TIME && !entryQueue.empty()) {
+    // Loop through entry queue
+    for (unsigned int i = 0; i < entryQueue.size(); i++) {
+      Process entryProcess = entryQueue.front();
+      if (entryProcess.arrivalTime <= mainTimer) {
+        entryProcess.printEntryPop(mainTimer);
+        entryQueue.pop();
+        readyQueue.push(entryProcess);
+        processCount++;
+      } else {
+        entryQueue.pop();
+        entryQueue.push(entryProcess);
       }
 
-      if (processPool.empty()) break;
+      if (entryQueue.empty()) break;
+    } // end entry queue loop
+
+    // Loop through ready queue
+    while (!readyQueue.empty() && !isCpuActive) {
+      activeProcess = readyQueue.top();
+      Active = &activeProcess;
+      readyQueue.pop();
+      isCpuActive = true;
     }
 
+    // Handle active process
+    if (Active && isCpuActive) {
+      isCpuActive = Active->runProcess();
+      Active->printActiveState("Active", mainTimer);
+
+      if (!isCpuActive) {
+        switch (Active->history[Active->historyIndex].first) {
+          case 'I':
+            inputQueue.push(*Active);
+            Active = nullptr;
+            break;
+          case 'O':
+            outputQueue.push(*Active);
+            Active = nullptr;
+            break;
+          default:
+            cerr << "Error with end of process!" << endl;
+            break;
+        }
+      }
+    } // end Active process conditional
+
+    while (!inputQueue.empty() && !isInputActive) {
+      inputProcess = inputQueue.top();
+      IActive = &inputProcess;
+      inputQueue.pop();
+      isInputActive = true;
+    }
+
+    if (mainTimer > 40) break;
+
+    if ((mainTimer % 20) == 0) {
+      printStatus(entryQueue, readyQueue, inputQueue, outputQueue,
+                    Active, IActive, OActive);
+    }
 
     mainTimer++;
   }

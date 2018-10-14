@@ -9,6 +9,10 @@
   using std::vector;
 
   class Process {
+    private:
+      string buildPrefixType(string output);
+
+
     public:
       string processName;
       unsigned int priority;
@@ -28,7 +32,10 @@
       Process();
       Process(string, unsigned int, unsigned int);
       void calculateBurstCounts();
-      void printReadyPush(int);
+      void printEntryPop(unsigned int);
+      void printQueuePush(string, unsigned int);
+      void printActiveState(string, unsigned int);
+      int runProcess();
 
 
   };

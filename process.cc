@@ -1,12 +1,10 @@
 #include <iostream>
 #include <string>
-#include <map>
 #include <iterator>
 #include "process.h"
 
 using std::cerr;
 using std::endl;
-using std::multimap;
 using std::pair;
 
 Process::Process() {
@@ -17,7 +15,7 @@ Process::Process(string newName, unsigned int newPriority, unsigned int newTime)
   processName = newName;
   priority = newPriority;
   arrivalTime = newTime;
-
+  historyIndex = 0;
   cpuTimer = 0;
   ioTimer = 0;
   cpuTotal = 0;
@@ -54,6 +52,44 @@ void Process::calculateBurstCounts() {
   }
 }
 
-void Process::printReadyPush(int pushTime) {
-  cerr << "Pushed " << processName << " process at " << pushTime << endl; 
+string Process::buildPrefixType(string output) {
+  if (output.compare("Entry Queue") == 0) {
+    return "(E) - ";
+  } else if (output.compare("Ready Queue") == 0) {
+    return "(R) - ";
+  } else if (output.compare("Active") == 0) {
+    return "(A) - ";
+  } else {
+    return "";
+  }
+}
+
+void Process::printEntryPop(unsigned int popTime) {
+  cerr << processName << " moved from the Entry Queue into the Ready Queue at time "
+    << popTime << endl << endl;
+}
+
+void Process::printQueuePush(string qType, unsigned int pushTime) {
+  string prefix = buildPrefixType(qType);
+
+  cerr << prefix << "Pushed " << processName << " process onto "
+    << qType << " at " << pushTime << endl << endl;
+}
+
+void Process::printActiveState(string stateType, unsigned int pushTime) {
+  string prefix = buildPrefixType(stateType);
+
+  cerr << prefix << processName << " process is Active. Times Main/CPU: "
+      << pushTime << " -- " << cpuTimer << endl << endl;
+}
+
+int Process::runProcess() {
+  cpuTimer++;
+  if (cpuTimer <= history[historyIndex].second) {
+    return true;
+  } else {
+    historyIndex++;
+    cpuTimer = 0;
+    return false;
+  }
 }
