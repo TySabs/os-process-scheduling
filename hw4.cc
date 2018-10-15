@@ -67,14 +67,7 @@ void printPriorityQueue(priority_queue<Process, vector<Process>, GreaterThanByPr
   }
 }
 
-void printStatus(unsigned int currentTime, queue<Process> entryQ,
-        priority_queue<Process, vector<Process>, GreaterThanByPriority> readyQ,
-        priority_queue<Process, vector<Process>, GreaterThanByPriority> inputQ,
-        priority_queue<Process, vector<Process>, GreaterThanByPriority> outputQ,
-        Process* aPtr, Process* iPtr, Process* oPtr) {
-
-  cerr << "Status Update at " << currentTime << endl;
-
+void printProcesses(Process *aPtr, Process *iPtr, Process *oPtr) {
   string activeName = "0", inputName = "0", outputName = "0";
 
   // Set ptr to process name if ptr is not null
@@ -85,11 +78,26 @@ void printStatus(unsigned int currentTime, queue<Process> entryQ,
   cerr << "Active is " << activeName << endl;
   cerr << "IActive is " << inputName << endl;
   cerr << "OActive is " << outputName << endl << endl;
+}
 
+void printStatus(unsigned int currentTime, queue<Process> entryQ,
+        priority_queue<Process, vector<Process>, GreaterThanByPriority> readyQ,
+        priority_queue<Process, vector<Process>, GreaterThanByPriority> inputQ,
+        priority_queue<Process, vector<Process>, GreaterThanByPriority> outputQ,
+        Process *aPtr, Process *iPtr, Process *oPtr) {
+
+  cerr << "*********************************" << endl;
+  cerr << "Status Update at " << currentTime << endl;
+
+  printProcesses(aPtr, iPtr, oPtr);
   printEntryQueue(entryQ);
   printPriorityQueue(readyQ, "Ready");
   printPriorityQueue(inputQ, "Input");
   printPriorityQueue(outputQ, "Output");
+
+  cerr << "*********************************" << endl << endl;
+
+  cerr << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -141,8 +149,11 @@ int main(int argc, char *argv[]) {
 
   infile.close();
 
-  unsigned int mainTimer = 0;
-  int processCount = 0;
+  unsigned int mainTimer = 0,
+                idleTimeTotal = 0;
+
+  int processCount = 0,
+        terminatedCount = 0;
   Process *Active = NULL,
           *IActive = NULL,
           *OActive = NULL;
@@ -182,8 +193,9 @@ int main(int argc, char *argv[]) {
       isCpuActive = Active->runCpu();
 
       if (Active->historyIndex > Active->history.size()-1 && !isCpuActive) {
-        Active->goodbye(mainTimer);
+        idleTimeTotal += Active->goodbye(mainTimer);
         processCount--;
+        terminatedCount++;
         Active = nullptr;
       } else if (!isCpuActive) {
         switch (Active->history[Active->historyIndex].first) {
@@ -246,7 +258,18 @@ int main(int argc, char *argv[]) {
     mainTimer++;
   } // end main loop
 
-  cerr << "Final time: " << mainTimer << endl;
+  cerr << "The run has ended." << endl;
+  cerr << "Final value of the timer: " << mainTimer << endl;
+  cerr << "The amount of time spent idle was " << idleTimeTotal << endl;
+  cerr << "Number of terminated processes" << endl;
+
+  printProcesses(Active, IActive, OActive);
+  printEntryQueue(entryQueue);
+  printPriorityQueue(readyQueue, "Ready");
+  printPriorityQueue(inputQueue, "Input");
+  printPriorityQueue(outputQueue, "Output");
+
+  cerr << endl;
 
   return 0;
 }

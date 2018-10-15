@@ -29,7 +29,7 @@
 
       // Private Methods
       void calculateBurstCounts();
-      int calculateIdleTime(int);
+      unsigned int calculateIdleTime(unsigned int);
 
     public:
       // Public Data members
@@ -47,7 +47,7 @@
       void printEntryPop(unsigned int);
       bool runCpu();
       bool runIO();
-      void goodbye(unsigned int);
+      unsigned int goodbye(unsigned int);
 
   };
 

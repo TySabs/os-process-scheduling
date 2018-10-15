@@ -51,14 +51,15 @@ Process::Process(string newName, unsigned int newPriority, unsigned int newTime)
   oCount = 0;
 }
 
-void Process::goodbye(unsigned int endTime) {
-  cerr << "Terminating process" << endl;
-  cerr << "><><><><><><><><><><><><><><" << endl;
+unsigned int Process::goodbye(unsigned int endTime) {
+  cerr << "\tTerminating Process" << endl;
+  cerr << "><><><><><><><><><><><><><><<><><" << endl;
   cerr << "Process Name: " << processName << endl;
   cerr << "Priority: " << priority << endl;
   cerr << "Arrival Time: " << arrivalTime << endl;
-  cerr << "Termination Time: " << endTime << endl;
-  cerr << "-----------History------------" << endl;
+  cerr << "Termination Time: " << endTime << endl << endl;
+  cerr << "\tHistory" << endl;
+  cerr << "-------------------------" << endl;
 
 
   vector<pair<char, int> >::iterator it;
@@ -67,18 +68,20 @@ void Process::goodbye(unsigned int endTime) {
   }
 
   calculateBurstCounts();
-  cerr << "Counts -- CPU: " << cpuCount << " || Input: " << iCount
-          << " || Output " << oCount << endl;
-  cerr << "CPU Time: " << cpuTotal << endl;
-  cerr << "Input Time: " << iTotal << endl;
-  cerr << "Output Time: " << oTotal << endl;
-  cerr << "Idle Time: " << calculateIdleTime(endTime) << endl;
+  unsigned int idleTime = calculateIdleTime(endTime);
 
-  cerr << endl;
+  cerr << "Total CPU Time: " << cpuTotal << " in " << cpuCount <<  " CPU bursts" << endl;
+  cerr << "Total Input Time: " << iTotal << " in " << iCount <<  " Input bursts" << endl;
+  cerr << "Total Output Time: " << oTotal << " in " << oCount <<  " Output bursts" << endl;
+  cerr << "Time spent waiting: " << idleTime << endl;
+
+  cerr << "><><><><><><><><><><><><><><<><><" << endl << endl;
+
+  return idleTime;
 }
 
-int Process::calculateIdleTime(int endTime) {
-  int idleTime = (int) endTime - (int) arrivalTime - cpuTotal - iTotal - oTotal;
+unsigned int Process::calculateIdleTime(unsigned int endTime) {
+  unsigned int idleTime = endTime - arrivalTime - cpuTotal - iTotal - oTotal;
   return idleTime;
 }
 
