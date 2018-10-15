@@ -167,7 +167,6 @@ int main(int argc, char *argv[]) {
   queue<Process> entryQueue;
   priority_queue<Process, vector<Process>, GreaterThanByPriority> readyQueue,
         inputQueue, outputQueue;
-  vector<Process> processPool;
 
   // Open the file
   infile.open("./data4.txt");
