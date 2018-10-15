@@ -26,6 +26,7 @@
       int cpuCount;
       int iCount;
       int oCount;
+      int readyTime;
 
       // Private Methods
       void calculateBurstCounts();
@@ -48,7 +49,6 @@
       bool runCpu();
       bool runIO();
       unsigned int goodbye(unsigned int);
-
   };
 
 #endif

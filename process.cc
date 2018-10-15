@@ -6,14 +6,11 @@
  ***********************************************************************/
 
 #include <iostream>
-#include <string>
 #include <iterator>
 #include "process.h"
 
 using std::cerr;
 using std::endl;
-using std::pair;
-
 
 /***********************************************************************
  * Process Constructor
@@ -49,19 +46,31 @@ Process::Process(string newName, unsigned int newPriority, unsigned int newTime)
   cpuCount = 0;
   iCount = 0;
   oCount = 0;
+  readyTime = 0;
 }
 
+/***********************************************************************
+ * Process.goodbye method
+ *
+ * Arguments(1):
+ *  1. endTime - the time that this process terminated
+ *
+ * Returns: and unsigned int - time spent idle
+ *
+ * Use: Displays info about the process at time of termination
+ ***********************************************************************/
 unsigned int Process::goodbye(unsigned int endTime) {
   cerr << "\tTerminating Process" << endl;
   cerr << "><><><><><><><><><><><><><><<><><" << endl;
   cerr << "Process Name: " << processName << endl;
   cerr << "Priority: " << priority << endl;
   cerr << "Arrival Time: " << arrivalTime << endl;
+  cerr << "Start Time: " << readyTime << endl;
   cerr << "Termination Time: " << endTime << endl << endl;
   cerr << "\tHistory" << endl;
   cerr << "-------------------------" << endl;
 
-
+  // Loop through history vector
   vector<pair<char, int> >::iterator it;
   for (it = history.begin(); it != history.end(); ++it) {
     cerr << "Burst Type: "  << it->first <<  " -- Time: " << it->second << endl;
@@ -78,13 +87,33 @@ unsigned int Process::goodbye(unsigned int endTime) {
   cerr << "><><><><><><><><><><><><><><<><><" << endl << endl;
 
   return idleTime;
-}
+} // end Process.goodbye method
 
+
+/***********************************************************************
+ * Process.calculateIdle method
+ *
+ * Arguments(1):
+ *  1. endTime - the time that this process terminated
+ *
+ * Returns: and unsigned int - time spent idle
+ *
+ * Use: Calculates the time spent idle
+ ***********************************************************************/
 unsigned int Process::calculateIdleTime(unsigned int endTime) {
-  unsigned int idleTime = endTime - arrivalTime - cpuTotal - iTotal - oTotal;
+  unsigned int idleTime = endTime - readyTime - cpuTotal - iTotal - oTotal;
   return idleTime;
 }
 
+/***********************************************************************
+ * Process.calculateBurstCounts method
+ *
+ * Arguments(0):
+ *
+ * Returns: void
+ *
+ * Use: Calculates the count of bursts for each type of burst
+ ***********************************************************************/
 void Process::calculateBurstCounts() {
   vector<pair<char, int> >::iterator it;
   for (it = history.begin(); it != history.end(); ++it) {
@@ -94,11 +123,32 @@ void Process::calculateBurstCounts() {
   }
 }
 
+/***********************************************************************
+ * Process.printEntryPop method
+ *
+ * Arguments(1):
+ *  1. popTime - the time that this process was popped off the entryQueue
+ *
+ * Returns: void
+ *
+ * Use: Prints the entry that has been popped off the entry queue
+ ***********************************************************************/
 void Process::printEntryPop(unsigned int popTime) {
+  readyTime = popTime;
+
   cerr << processName << " moved from the Entry Queue into the Ready Queue at time "
     << popTime << endl << endl;
 }
 
+/***********************************************************************
+ * Process.runCpu method
+ *
+ * Arguments(0): None
+ *
+ * Returns: bool - true if still running, false if done
+ *
+ * Use: Runs the Cpu for one tick and indicates if process has ended
+ ***********************************************************************/
 bool Process::runCpu() {
   cpuTimer++;
   if (cpuTimer <= history[historyIndex].second) {
@@ -111,6 +161,15 @@ bool Process::runCpu() {
   }
 }
 
+/***********************************************************************
+ * Process.runIO method
+ *
+ * Arguments(0): None
+ *
+ * Returns: bool - true if still running, false if done
+ *
+ * Use: Runs I/O for one tick and indicates if process has ended
+ ***********************************************************************/
 bool Process::runIO() {
   ioTimer++;
   if (ioTimer <= history[historyIndex].second) {
