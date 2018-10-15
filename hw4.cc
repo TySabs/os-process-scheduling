@@ -23,7 +23,6 @@ using std::make_pair;
 
 const int MAX_TIME = 500,
             AT_ONCE = 5,
-            QUEUE_SIZE = 20,
             HOW_OFTEN = 25;
 
 struct GreaterThanByPriority {
@@ -68,18 +67,17 @@ void printPriorityQueue(priority_queue<Process, vector<Process>, GreaterThanByPr
   }
 }
 
-void printStatus(queue<Process> entryQ,
+void printStatus(unsigned int currentTime, queue<Process> entryQ,
         priority_queue<Process, vector<Process>, GreaterThanByPriority> readyQ,
         priority_queue<Process, vector<Process>, GreaterThanByPriority> inputQ,
         priority_queue<Process, vector<Process>, GreaterThanByPriority> outputQ,
         Process* aPtr, Process* iPtr, Process* oPtr) {
-  printEntryQueue(entryQ);
-  printPriorityQueue(readyQ, "Ready");
-  printPriorityQueue(inputQ, "Input");
-  printPriorityQueue(outputQ, "Output");
+
+  cerr << "Status Update at " << currentTime << endl;
 
   string activeName = "0", inputName = "0", outputName = "0";
 
+  // Set ptr to process name if ptr is not null
   if (aPtr) activeName = aPtr->processName;
   if (iPtr) inputName = iPtr->processName;
   if (oPtr) outputName = oPtr->processName;
@@ -87,6 +85,11 @@ void printStatus(queue<Process> entryQ,
   cerr << "Active is " << activeName << endl;
   cerr << "IActive is " << inputName << endl;
   cerr << "OActive is " << outputName << endl << endl;
+
+  printEntryQueue(entryQ);
+  printPriorityQueue(readyQ, "Ready");
+  printPriorityQueue(inputQ, "Input");
+  printPriorityQueue(outputQ, "Output");
 }
 
 int main(int argc, char *argv[]) {
@@ -130,8 +133,6 @@ int main(int argc, char *argv[]) {
       infile >> burstTime;
     }
 
-    newProcess.calculateBurstCounts();
-
     entryQueue.push(newProcess);
 
     string garbage;
@@ -155,7 +156,7 @@ int main(int argc, char *argv[]) {
     // Loop through entry queue
     for (unsigned int i = 0; i < entryQueue.size(); i++) {
       Process entryProcess = entryQueue.front();
-      if (entryProcess.arrivalTime <= mainTimer) {
+      if (entryProcess.arrivalTime <= mainTimer && processCount <= AT_ONCE) {
         entryProcess.printEntryPop(mainTimer);
         entryQueue.pop();
         readyQueue.push(entryProcess);
@@ -178,10 +179,13 @@ int main(int argc, char *argv[]) {
 
     // Handle active process
     if (Active && isCpuActive) {
-      isCpuActive = Active->runProcess();
-      // Active->printActiveState("Active", mainTimer);
+      isCpuActive = Active->runCpu();
 
-      if (!isCpuActive) {
+      if (Active->historyIndex > Active->history.size()-1 && !isCpuActive) {
+        Active->goodbye(mainTimer);
+        processCount--;
+        Active = nullptr;
+      } else if (!isCpuActive) {
         switch (Active->history[Active->historyIndex].first) {
           case 'I':
             inputQueue.push(*Active);
@@ -189,10 +193,6 @@ int main(int argc, char *argv[]) {
             break;
           case 'O':
             outputQueue.push(*Active);
-            Active = nullptr;
-            break;
-          default:
-            Active->goodbye(mainTimer);
             Active = nullptr;
             break;
         }
@@ -227,9 +227,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Handle active process
-    if (OActive && isInputActive) {
+    if (OActive && isOutputActive) {
       isOutputActive = OActive->runIO();
-      // OActive->printActiveState("Output", mainTimer);
 
       if (!isOutputActive) {
         readyQueue.push(*OActive);
@@ -237,10 +236,10 @@ int main(int argc, char *argv[]) {
       }
     } // end IActive process conditional
 
-    if (mainTimer > 200) break;
+    if (entryQueue.empty() && processCount == 0) break;
 
-    if ((mainTimer % 20) == 0) {
-      printStatus(entryQueue, readyQueue, inputQueue, outputQueue,
+    if ((mainTimer % HOW_OFTEN) == 0) {
+      printStatus(mainTimer, entryQueue, readyQueue, inputQueue, outputQueue,
                     Active, IActive, OActive);
     }
 
